@@ -27,7 +27,7 @@ class Debug_Bar {
 	}
 
 	function init() {
-		if ( ! is_super_admin() || ! is_admin_bar_showing() || $this->is_wp_login() )
+		if ( ! $this->is_super_admin() || ! is_admin_bar_showing() || $this->is_wp_login() )
 			return;
 
 		add_action( 'admin_bar_menu',               array( &$this, 'admin_bar_menu' ), 1000 );
@@ -50,7 +50,7 @@ class Debug_Bar {
 	}
 
 	function init_ajax() {
-		if ( ! is_super_admin() )
+		if ( ! $this->is_super_admin() )
 			return;
 
 		$this->requirements();
@@ -110,6 +110,20 @@ class Debug_Bar {
 			$usage = memory_get_usage();
 		}
 		return $usage;
+	}
+
+	// same as is_super_admin, but also adds support for user-switching plugin
+	function is_super_admin() {
+		$user_id = get_current_user_id();
+
+		if ( defined( 'OLDUSER_COOKIE' ) ) {
+			if ( isset( $_COOKIE[OLDUSER_COOKIE] ) ) {
+				if( $original_id = wp_validate_auth_cookie( $_COOKIE[OLDUSER_COOKIE], 'old_user' ) )
+					$user_id = $original_id;
+			}
+		}
+
+		return is_super_admin( $user_id );
 	}
 
 	function admin_bar_menu() {
